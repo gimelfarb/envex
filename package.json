@@ -1,0 +1,51 @@
+{
+  "name": "envex",
+  "version": "1.0.0-alpha.1",
+  "description": "Highly configurable env var launcher. Supports using async JS function calls and bash-style command expansion $(...)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gimelfarb/envex"
+  },
+  "main": "src/envex.js",
+  "scripts": {
+    "test": "jest",
+    "cli": "./bin/envex.js"
+  },
+  "keywords": [
+    "env",
+    "manage",
+    "dev",
+    "envex",
+    "env-cmd"
+  ],
+  "author": "Lev Gimelfarb <lev@gimelfarb.net>",
+  "license": "ISC",
+  "bin": {
+    "envex": "bin/envex.js",
+    "ex": "bin/envex.js"
+  },
+  "files": [
+    "bin/envex.js",
+    "src/*.js",
+    "index.d.ts"
+  ],
+  "publishConfig": {
+    "tag": "alpha"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.13",
+    "@types/node": "^12.0.3",
+    "axios": "^0.19.0",
+    "inquirer": "^6.3.1",
+    "jest": "^24.8.0"
+  },
+  "dependencies": {
+    "commander": "^2.20.0",
+    "cross-spawn": "^6.0.5",
+    "escape-string-regexp": "^2.0.0",
+    "node-ipc": "^9.1.1",
+    "stream-snitch": "0.0.3",
+    "string-argv": "^0.3.0",
+    "strip-ansi-stream": "^1.0.0"
+  }
+}
