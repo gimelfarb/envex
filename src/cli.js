@@ -26,6 +26,7 @@ async function mainAsync() {
         if (cmd_args.length > 0) {
             const [child_cmd, ...child_args] = cmd_args;
             await envex.attachExpose('server');
+            // TODO: support use_shell
             const { code, signal } = await envex.runCmd(child_cmd, child_args);
             signal ? process.kill(process.pid, signal) : process.exit(code);
         } else {

@@ -7,6 +7,8 @@ module.exports = {
     createConfigResolver,
 };
 
+// TODO: support load .env files (for compatibility with existing setups)
+
 async function loadConfigAsync(potentialPath) {
     const configPath = await findConfigFileAsync(potentialPath);
     if (!configPath) {
@@ -69,6 +71,7 @@ async function resolveProfileConfigAsync(rawProfile, config) {
     else if (!Array.isArray(imports)) imports = [];
 
     for (const name of imports) {
+        // FIX TODO: file resolution needs to be relative to config file
         const env = await readEnvFileAsync(name);
         base = extendProfileConfig(base, { env });
     }
