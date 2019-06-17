@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const commander = require('commander');
 const pjson = require('../package.json');
 const { Envex } = require('./envex');

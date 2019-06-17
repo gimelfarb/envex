@@ -1,5 +1,4 @@
 const ipc = require('node-ipc');
-const EventEmitter = require('events');
 
 ipc.config.appspace = 'envex.';
 ipc.config.maxRetries = 0;

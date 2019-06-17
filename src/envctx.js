@@ -246,7 +246,7 @@ function parseEnvKey(key) {
 function parseEnvStr(s) {
     const regex = /\$\{(?<var>[^${}]*)\}|\$(?<var2>[a-z0-9_]+)|\$\((?<cmd>[^)]*)\)/gi;
     let m, i = 0, res = [];
-    while (m = regex.exec(s)) {
+    while ((m = regex.exec(s))) {
         if (i < m.index) res.push(s.substring(i, m.index));
         i = m.index + m[0].length;
 

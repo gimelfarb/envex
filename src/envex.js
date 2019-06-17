@@ -173,7 +173,7 @@ function combineExposers(exposer, addition) {
         expose: (map) => exposers.forEach(e => e.expose(map)),
         close: () => Promise.all(exposers.map(e => e.close()))
     };
-};
+}
 
 function createTapStream() {
     return stripAnsiStream();
