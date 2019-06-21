@@ -21,6 +21,10 @@ class Envex {
         this.profile = profile;
     }
 
+    useShell(enabled) {
+        this.use_shell = enabled;
+    }
+
     async resolveEnv(parent_env) {
         this.env = await this._env(parent_env);
     }
@@ -39,6 +43,7 @@ class Envex {
     async evalCmd(child_cmd, child_args) {
         const env = this.env;
         const { cwd } = this.config || {};
+        const shell = this.use_shell;
 
         let strpromise;
         const stdio = {
@@ -47,7 +52,7 @@ class Envex {
             stderr: 'ignore'
         };
 
-        const { code } = await runChildAsync(child_cmd, child_args, { stdio, env, cwd });
+        const { code } = await runChildAsync(child_cmd, child_args, { stdio, env, cwd, shell });
         if (code) throw new Error(`Process exit code (${code}) is non-zero: ${child_cmd}`);
 
         let str = await strpromise;
@@ -58,6 +63,7 @@ class Envex {
     async runCmd(child_cmd, child_args) {
         const env = this.env;
         const { cwd } = this.config || {};
+        const shell = this.use_shell;
         let stdio;
 
         if (this.config && this.exposer) {
@@ -78,7 +84,7 @@ class Envex {
         }
 
         try {
-            return await runChildAsync(child_cmd, child_args, { stdio, env, cwd });
+            return await runChildAsync(child_cmd, child_args, { stdio, env, cwd, shell });
         } finally {
             this.exposer && (await this.exposer.close());
         }

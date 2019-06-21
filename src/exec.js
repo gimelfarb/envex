@@ -5,7 +5,7 @@ module.exports = {
 };
 
 async function runChildAsync(cmd, args, opts) {
-    let { stdio, env, cwd } = opts || {};
+    let { stdio, env, cwd, shell } = opts || {};
     stdio = stdio || {};
 
     const stdioNames = ['stdin', 'stdout', 'stderr'];
@@ -18,7 +18,8 @@ async function runChildAsync(cmd, args, opts) {
     const child = spawn(cmd, args, {
         stdio: stdioNames.map(stdioFlag),
         env: { ...process.env, ...env },
-        cwd
+        cwd,
+        shell
     });
 
     const child_promise = new Promise((resolve, reject) => {

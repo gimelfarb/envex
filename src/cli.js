@@ -12,7 +12,14 @@ exports.main = function main() {
 
 async function mainAsync() {
     const runCfg = processArgs();
-    const { profile, rc_file, cmd, cmd_args, out_file } = runCfg;
+    const { 
+        profile, 
+        rc_file, 
+        cmd, 
+        cmd_args, 
+        out_file,
+        use_shell
+    } = runCfg;
     
     const envex = new Envex();
     await envex.loadConfig(rc_file);
@@ -27,7 +34,7 @@ async function mainAsync() {
         if (cmd_args.length > 0) {
             const [child_cmd, ...child_args] = cmd_args;
             await envex.attachExpose('server');
-            // TODO: support use_shell
+            use_shell && envex.useShell(true);
             const { code, signal } = await envex.runCmd(child_cmd, child_args);
             signal ? process.kill(process.pid, signal) : process.exit(code);
         } else {
@@ -50,6 +57,7 @@ function processArgs() {
         `npm:${process.env.npm_lifecycle_event}` : undefined;
 
     // TODO: make 'get' a command rather than option (need 'run' to be an implicit command)
+    // TODO: add a '--wait' switch for 'get' command, for waiting scenarios
     commander
         .version(pjson.version)
         .arguments('[childcmd...]')
@@ -71,7 +79,7 @@ function processArgs() {
 
     if (commander['get']) {
         opts.cmd = 'get';
-        opts.cmd_args = commander['get'];
+        opts.cmd_args = [ commander['get'] ];
     }
     if (commander['out']) {
         opts.out_file = commander['out'];
