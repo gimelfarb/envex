@@ -31,23 +31,26 @@ async function loadConfigAsync(potentialPath) {
 function createConfigResolver(rawConfig) {
     const rawProfiles = rawConfig.profiles || {};
     const resolvedProfiles = {};
-    const resolvingProfiles = {};
+    const _profile = async (name, resolvingProfiles) => {
+        if (!resolvedProfiles[name]) {
+            const rawProfile = rawProfiles[name];
+            if (!rawProfile) throw new Error(`Unknown profile: ${name}`);
+
+            if (resolvingProfiles[name]) throw new Error(`Circular reference for profile: ${name}`);
+            resolvingProfiles[name] = true;
+            try {
+                const recursiveConfig = { profile: (name) => _profile(name, resolvingProfiles) };
+                const resolved = await resolveProfileConfigAsync(rawProfile, recursiveConfig);
+                resolvedProfiles[name] = resolved;
+            } finally {
+                resolvingProfiles[name] = false;
+            }
+        }
+        return resolvedProfiles[name];
+    };
     const config = {
         async profile(name) {
-            if (!resolvedProfiles[name]) {
-                const rawProfile = rawProfiles[name];
-                if (!rawProfile) throw new Error(`Unknown profile: ${name}`);
-
-                if (resolvingProfiles[name]) throw new Error(`Circular reference for profile: ${name}`);
-                resolvingProfiles[name] = true;
-                try {
-                    const resolved = await resolveProfileConfigAsync(rawProfile, config);
-                    resolvedProfiles[name] = resolved;
-                } finally {
-                    resolvingProfiles[name] = false;
-                }
-            }
-            return resolvedProfiles[name];
+            return _profile(name, {});
         }
     };
     return config;
