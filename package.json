@@ -1,6 +1,6 @@
 {
   "name": "envex",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Highly configurable env var launcher. Supports using async JS function calls and bash-style command expansion $(...)",
   "repository": {
     "type": "git",
