@@ -36,3 +36,5 @@ coverage/
 NOTES
 .snippets/
 
+# Ignore launch.json for now
+.vscode/launch.json
