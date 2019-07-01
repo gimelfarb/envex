@@ -1,6 +1,6 @@
 const stream = require('stream');
-const stripAnsiStream = require('strip-ansi-stream');
 const stringArgv = require('string-argv').default;
+const stripAnsiStream = require('./strip-ansi-stream');
 const { loadConfigAsync } = require('./config');
 const { createEnvContext } = require('./envctx');
 const { createExposeContext } = require('./exposectx');
