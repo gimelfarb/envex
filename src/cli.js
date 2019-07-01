@@ -3,15 +3,14 @@ const commander = require('commander');
 const pjson = require('../package.json');
 const { Envex } = require('./envex');
 
-exports.main = function main() {
-    mainAsync().catch(err => {
-        console.error('envex error: ', err);
-        process.exit(-1);
-    });
+module.exports = {
+    execAsync,
 };
 
-async function mainAsync() {
-    const runCfg = processArgs();
+async function execAsync(args, stdout) {
+    stdout = stdout || process.stdout;
+
+    const runCfg = processArgs(args);
     const { 
         profile, 
         rc_file, 
@@ -20,6 +19,8 @@ async function mainAsync() {
         out_file,
         use_shell
     } = runCfg;
+
+    let code = 0, signal;
     
     const envex = new Envex();
     await envex.loadConfig(rc_file);
@@ -35,8 +36,7 @@ async function mainAsync() {
             const [child_cmd, ...child_args] = cmd_args;
             await envex.attachExpose('server');
             use_shell && envex.useShell(true);
-            const { code, signal } = await envex.runCmd(child_cmd, child_args);
-            signal ? process.kill(process.pid, signal) : process.exit(code);
+            ({ code, signal } = await envex.runCmd(child_cmd, child_args));
         } else {
             await envex.runExpose();
         }
@@ -44,11 +44,14 @@ async function mainAsync() {
     else if (cmd === 'get') {
         const [ key ] = cmd_args;
         const val = await envex.getRemoteVar(key);
-        console.log(val);
+        stdout.write(val);
+        stdout.write('\n');
     }
+
+    return { code, signal };
 }
 
-function processArgs() {
+function processArgs(args) {
     const opts = {
         cmd: 'run',
         cmd_args: []
@@ -58,7 +61,8 @@ function processArgs() {
 
     // TODO: make 'get' a command rather than option (need 'run' to be an implicit command)
     // TODO: add a '--wait' switch for 'get' command, for waiting scenarios
-    commander
+    const program = new commander.Command();
+    program
         .version(pjson.version)
         .arguments('[childcmd...]')
         .option('-f, --rc-file <path>', 'path to the .envexrc.js config file (default: current folder)', './.envexrc')
@@ -70,19 +74,20 @@ function processArgs() {
             opts.cmd_args = cmd_args;
         });
 
-    const argv = separateChildArgs(process.argv, commander);
-    commander.parse(argv);
+    let argv = ['node', 'envex.js', ...args];
+    argv = separateChildArgs(argv, program);
+    program.parse(argv);
 
-    opts.rc_file = commander['rcFile'];
-    opts.profile = commander['profile'];
-    opts.use_shell = !!commander['shell'];
+    opts.rc_file = program['rcFile'];
+    opts.profile = program['profile'];
+    opts.use_shell = !!program['shell'];
 
-    if (commander['get']) {
+    if (program['get']) {
         opts.cmd = 'get';
-        opts.cmd_args = [ commander['get'] ];
+        opts.cmd_args = [ program['get'] ];
     }
-    if (commander['out']) {
-        opts.out_file = commander['out'];
+    if (program['out']) {
+        opts.out_file = program['out'];
     }
 
     return opts;
@@ -92,7 +97,7 @@ function processArgs() {
  * Inserts '--' after all known options, to clearly
  * indicate that any following args are for the child process.
  */
-function separateChildArgs(raw_argv, commander) {
+function separateChildArgs(raw_argv, program) {
     const argv = [...raw_argv];
     for (let i = 2; i < argv.length; ++i) {
         const arg = argv[i];
@@ -102,7 +107,7 @@ function separateChildArgs(raw_argv, commander) {
         if (arg.length > 0 && arg[0] === '-') {
             // Use commander definition to check if option is
             // followed by a value argument
-            const option = commander.optionFor(arg);
+            const option = program.optionFor(arg);
             if (option && (option.required || option.optional)) {
                 ++i;
             } else if (i < argv.length - 1 && argv[i + 1][0] !== '-') {

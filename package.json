@@ -1,14 +1,14 @@
 {
   "name": "envex",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Highly configurable env var launcher. Supports using async JS function calls and bash-style command expansion $(...)",
   "repository": {
     "type": "git",
     "url": "https://github.com/gimelfarb/envex"
   },
-  "main": "src/envex.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage",
     "cli": "./bin/envex.js",
     "lint": "eslint src/"
   },
@@ -40,7 +40,9 @@
     "eslint": "^5.16.0",
     "eslint-plugin-jest": "^22.6.4",
     "inquirer": "^6.3.1",
-    "jest": "^24.8.0"
+    "jest": "^24.8.0",
+    "mocked-env": "^1.3.1",
+    "tmp-promise": "^2.0.1"
   },
   "dependencies": {
     "commander": "^2.20.0",
@@ -48,7 +50,6 @@
     "escape-string-regexp": "^2.0.0",
     "node-ipc": "^9.1.1",
     "stream-snitch": "0.0.3",
-    "string-argv": "^0.3.0",
-    "strip-ansi-stream": "^1.0.0"
+    "string-argv": "^0.3.0"
   }
 }
