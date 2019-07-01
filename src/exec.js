@@ -10,6 +10,7 @@ async function runChildAsync(cmd, args, opts) {
 
     const stdioNames = ['stdin', 'stdout', 'stderr'];
     const stdioFlag = (name) => {
+        if (stdio === 'inherit') return 'inherit';
         if (stdio[name] === 'inherit') return 'inherit';
         if (typeof stdio[name] === 'function') return 'pipe';
         return 'ignore';

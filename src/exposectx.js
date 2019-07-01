@@ -42,6 +42,8 @@ function createExposeContext() {
                 } else if (val && typeof val === 'object') {
                     let { regex } = val;
                     if (regex) {
+                        if (typeof regex === 'string') regex = new RegExp(regex);
+                        if (!(regex instanceof RegExp)) throw new Error(`Invalid regex value: ${regex}`);
                         fns.push((ctx) => {
                             const { tap } = ctx;
                             tap.pipe(new StreamSnitch(regex, (m) => {
