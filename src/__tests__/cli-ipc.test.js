@@ -44,7 +44,7 @@ describe('cli-ipc', () => {
             await Promise.race([srv.connected(), cli_srv_p]);
 
             const client_out = createStringWriteable();
-            await chk_cliexec(['-p', 'srv', '--get', 'VAR'], {
+            await chk_cliexec(['-p', 'srv', 'get', 'VAR'], {
                 cwd: _dir.path,
                 stdio: {
                     stdout: (tap) => tap.pipe(client_out)
@@ -92,14 +92,14 @@ describe('cli-ipc', () => {
             });
             await Promise.race([srv.connected(), cli_srv_p]);
 
-            await expect(chk_cli(['-p', 'srv', '--get', 'VAR'])).rejects.toThrow();
+            await expect(chk_cli(['-p', 'srv', 'get', 'VAR'])).rejects.toThrow();
             
             srv.signal();
             await delay(300);
             await Promise.race([srv.connected(), cli_srv_p]);
  
             const client_out = createStringWriteable();
-            await chk_cli(['-p', 'srv', '--get', 'VAR'], client_out);
+            await chk_cli(['-p', 'srv', 'get', 'VAR'], client_out);
             expect(client_out.toString().replace(/(\r?\n|\r)+$/, '')).toBe('abc');
 
             srv.signal();
