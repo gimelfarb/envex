@@ -145,7 +145,7 @@ module.exports = async () => ({
       env: {
         // Retrieve PORT value exposed by envex from 'npm:start' profile
         // when running 'react-scripts start'
-        'PORT': '$(envex -p npm:start --get PORT)',
+        'PORT': '$(envex -p npm:start get PORT)',
         // URL is needed for 'dot-launch' utility
         'URL': 'http://localhost:${PORT}/'
       }
@@ -186,7 +186,7 @@ The sequence of steps explained:
 2. `envex` 'npm:start' profile generates a free `PORT` number, and also sets `BROWSER` variable to tell `react-scripts` to run it after debug web server PORT number has been fully confirmed (*i.e. it can change interactively, if there are unlikely collisions*)
 3. `envex` 'npm:start' profile also sets up a watch for URLs in stdout (using regex), and told to expose it via `PORT` exposed variable. Exposing variables means starting a local server on a Unix-style socker (pipes on Windows), which can be queries through `envex` command-line.
 4. When `react-script` launch `.launchgen.js` script (via `BROWSER` setting), it will run `dot-launch` command-line utility through `envex` profile 'launchgen'
-5. `envex` 'launchgen' profile will retrieve exposed PORT value (i.e. `$(envex -p npm:start --get PORT)`), and set the  `URL` env variable to the correct dynamic app URL (to be used by `dot-launch`)
+5. `envex` 'launchgen' profile will retrieve exposed PORT value (i.e. `$(envex -p npm:start get PORT)`), and set the  `URL` env variable to the correct dynamic app URL (to be used by `dot-launch`)
 6. `dot-launch` generates an HTML launch file `.launch/app.html` using the specified `URL` (it is a page which automatically redirects to that URL when opened in browser)
 7. VSCode opens Chrome in debug mode, and uses "launch file" which redirects to the generated app URL!
 
@@ -303,11 +303,10 @@ module.exports = {
 
 We'll add another script to `package.json`:
 
-```json
+```js
 // File: package.json
 {
   "scripts": {
-    // ...
     "start:dev": "envex -p app:local node index.js"
   }
 }
@@ -317,7 +316,27 @@ Now, running `npm run start:dev` will start our backend app with the correct `DA
 
 ## Features
 
-TODO
+### Configuration File
+
+### Named Profiles
+
+### Import .env Files
+
+### Configure Environment Variables
+
+### Check For Required Environment Variables
+
+### Async Values
+
+### Expand Environment Variables
+
+### Circular Dependency Check
+
+### Expose Variables
+
+### Extract Exposed Values From Standard Output
+
+### Retrieve Exposed Variable Values
 
 ## Reference
 
@@ -331,10 +350,19 @@ Options:
   -V, --version         output the version number
   -f, --rc-file <path>  path to the .envexrc.js config file (default: current folder) (default: "./.envexrc")
   -p, --profile <name>  profile name to match in the config (autoset to npm:<script> if running under npm)
-  -s, --shell           use system shell for the child command
-  --get <key>           get var exposed by another process under envex
-  --out <filepath>      write exposed vars to the specified file after execution
-  -h, --help            output usage information
+
+Commands:
+  run [options] [childcmd...]  run child cmd under specified environment (*default command)
+  get <key>                    get var exposed by another process under envex
+
+$ envex run --help
+Usage: run [options] [childcmd...]
+
+run child cmd under specified environment (*default command)
+
+Options:
+  -s, --shell       use system shell for the child command
+  --out <filepath>  write exposed vars to the specified file after execution
 ```
 
 - `-f, --rc-file <path>` - allows overriding the config file path (by default looks for `.envexrc.js` or `.envexrc.json` in the current working dir)

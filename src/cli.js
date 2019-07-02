@@ -5,6 +5,7 @@ const { Envex } = require('./envex');
 
 module.exports = {
     execAsync,
+    processArgs,
 };
 
 async function execAsync(args, stdout) {
@@ -59,35 +60,65 @@ function processArgs(args) {
     const default_profile = process.env.npm_lifecycle_event ?
         `npm:${process.env.npm_lifecycle_event}` : undefined;
 
-    // TODO: make 'get' a command rather than option (need 'run' to be an implicit command)
     // TODO: add a '--wait' switch for 'get' command, for waiting scenarios
     const program = new commander.Command();
     program
         .version(pjson.version)
-        .arguments('[childcmd...]')
         .option('-f, --rc-file <path>', 'path to the .envexrc.js config file (default: current folder)', './.envexrc')
-        .option('-p, --profile <name>', 'profile name to match in the config (autoset to npm:<script> if running under npm)', default_profile)
+        .option('-p, --profile <name>', 'profile name to match in the config (autoset to npm:<script> if running under npm)', default_profile);
+
+    program
+        .command('run [childcmd...]')
+        .description('run child cmd under specified environment (*default command)')
         .option('-s, --shell', 'use system shell for the child command')
-        .option('--get <key>', 'get var exposed by another process under envex')
         .option('--out <filepath>', 'write exposed vars to the specified file after execution')
-        .action((cmd_args) => {
+        .action((cmd_args, cmd_opts) => {
+            opts.cmd = 'run';
             opts.cmd_args = cmd_args;
+            if (cmd_opts['shell']) opts.use_shell = true;
+            if (cmd_opts['out']) opts.out_file = cmd_opts['out'];
         });
 
+    program
+        .command('get <key>')
+        .description('get var exposed by another process under envex')
+        .action((key) => {
+            opts.cmd = 'get';
+            opts.cmd_args = [ key ];
+        });
+
+    // Override to allow specifying command options before
+    // the command (e.g. envex -p app --use-shell run ...)
+    const _originalOptionFor = program.optionFor;
+    for (const cmd of program.commands) {
+        for (let i = 0; i < cmd.options.length; ++i) {
+            const opt = cmd.options[i];
+            const evtname = 'option:' + opt.name();
+            program.removeAllListeners(evtname);
+            program.on(evtname, (...args) => cmd.emit(evtname, ...args));
+        }
+    }
+    program.optionFor = (arg) => {
+        let option = _originalOptionFor.apply(program, [arg]);
+        if (!option) {
+            for (const cmd of program.commands) {
+                option = cmd.optionFor(arg);
+                if (option) break;
+            }
+        }
+        return option;
+    };
+
     let argv = ['node', 'envex.js', ...args];
-    argv = separateChildArgs(argv, program);
+    argv = separateChildArgs(argv, 'run', program);
     program.parse(argv);
 
     opts.rc_file = program['rcFile'];
     opts.profile = program['profile'];
-    opts.use_shell = !!program['shell'];
 
-    if (program['get']) {
-        opts.cmd = 'get';
-        opts.cmd_args = [ program['get'] ];
-    }
-    if (program['out']) {
-        opts.out_file = program['out'];
+    if (!opts.profile) {
+        console.error('error: option \'--profile|-p\' is required');
+        process.exit(1);
     }
 
     return opts;
@@ -97,9 +128,10 @@ function processArgs(args) {
  * Inserts '--' after all known options, to clearly
  * indicate that any following args are for the child process.
  */
-function separateChildArgs(raw_argv, program) {
+function separateChildArgs(raw_argv, default_cmd, program) {
     const argv = [...raw_argv];
-    for (let i = 2; i < argv.length; ++i) {
+    let i, have_command = false;
+    for (i = 2; i < argv.length; ++i) {
         const arg = argv[i];
         // If already has explicit break, then stop
         if (arg === '--') break;
@@ -108,17 +140,25 @@ function separateChildArgs(raw_argv, program) {
             // Use commander definition to check if option is
             // followed by a value argument
             const option = program.optionFor(arg);
-            if (option && (option.required || option.optional)) {
-                ++i;
+            if (option) {
+                if (option.required || option.optional) ++i;
             } else if (i < argv.length - 1 && argv[i + 1][0] !== '-') {
                 ++i;
             }
-        // Otherwise the options are finished, and the rest is
-        // a child command
+        } else if (program.listeners('command:' + arg).length) {
+            // If known command, then we can still have command-specific options
+            have_command = true;
+            continue;
         } else {
+            // Otherwise the options are finished, and the rest is
+            // a child command
             argv.splice(i, 0, '--');
             break;
         }
+    }
+    // Check if we need to insert the default command
+    if (!have_command) {
+        argv.splice(i, 0, default_cmd);
     }
     return argv;
 }
