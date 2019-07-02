@@ -47,6 +47,7 @@
     "tmp-promise": "^2.0.1"
   },
   "dependencies": {
+    "any-base": "^1.1.0",
     "commander": "^2.20.0",
     "cross-spawn": "^6.0.5",
     "escape-string-regexp": "^2.0.0",

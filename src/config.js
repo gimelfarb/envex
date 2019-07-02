@@ -25,7 +25,10 @@ async function loadConfigAsync(potentialPath) {
         throw new Error('Unknown config file extension: ' + configPath);
     }
 
-    return createConfigResolver(rawConfig);
+    return {
+        configPath,
+        ...(createConfigResolver(rawConfig))
+    };
 }
 
 function createConfigResolver(rawConfig) {

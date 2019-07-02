@@ -8,6 +8,10 @@ const { runChildAsync } = require('./exec');
 const { streamToString } = require('./util');
 const { writeEnvFileAsync } = require('./persist');
 const exposesrv = require('./expose');
+const crypto = require('crypto');
+const anyBase = require('any-base');
+
+const hexToBase32 = anyBase(anyBase.HEX, 'abcdefghijklmnopqrstuvwxyz234567');
 
 class Envex {
 
@@ -31,7 +35,8 @@ class Envex {
 
     async attachExpose(mode, ...args) {
         if (mode === 'server') {
-            this.exposer = combineExposers(this.exposer, createServerExposer(this.profile));
+            const srvname = this._srvname();
+            this.exposer = combineExposers(this.exposer, createServerExposer(srvname));
         }
         else if (mode === 'file') {
             const [ filePath ] = args;
@@ -106,10 +111,22 @@ class Envex {
     }
 
     async getRemoteVar(key) {
-        const srv = await exposesrv.connectRemoteAsync(this.profile);
+        const srvname = this._srvname();
+        const srv = await exposesrv.connectRemoteAsync(srvname);
         const val = await srv.getAsync(key);
         srv.disconnect();
         return val;
+    }
+
+    _srvname() {
+        if (!this.configCtx) throw new Error('Requires configuration to be loaded');
+        if (!this.profile) throw new Error('Requires profile to be selected');
+        const configPath = this.configCtx.configPath;
+        const profile = this.profile;
+        const hash = crypto.createHash('sha256')
+            .update([configPath, profile].join(';'))
+            .digest('hex');
+        return hexToBase32(hash);
     }
 
     async _env(parent_env) {
@@ -138,6 +155,7 @@ class Envex {
     }
 }
 
+// TODO: create a unique srvname based on .envexrc.js file path, and profile name
 function createServerExposer(srvname) {
     let exposerp;
     return {
