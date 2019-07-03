@@ -155,7 +155,6 @@ class Envex {
     }
 }
 
-// TODO: create a unique srvname based on .envexrc.js file path, and profile name
 function createServerExposer(srvname) {
     let exposerp;
     return {
