@@ -10,8 +10,14 @@ const { writeEnvFileAsync } = require('./persist');
 const exposesrv = require('./expose');
 const crypto = require('crypto');
 const anyBase = require('any-base');
+const fs = require('fs');
+const { promisify } = require('util');
 
 const hexToBase32 = anyBase(anyBase.HEX, 'abcdefghijklmnopqrstuvwxyz234567');
+
+const fsasync = {
+    exists: promisify(fs.exists)
+};
 
 class Envex {
 
@@ -39,9 +45,9 @@ class Envex {
             this.exposer = combineExposers(this.exposer, createServerExposer(srvname));
         }
         else if (mode === 'file') {
-            const [ filePath ] = args;
+            const [ filePath, overwrite ] = args;
             if (!filePath) throw new Error('Missing file path');
-            this.exposer = combineExposers(this.exposer, createFileExposer(filePath));
+            this.exposer = combineExposers(this.exposer, createFileExposer(filePath, overwrite));
         }
     }
 
@@ -171,13 +177,15 @@ function createServerExposer(srvname) {
     };
 }
 
-function createFileExposer(filePath) {
+function createFileExposer(filePath, overwrite) {
     let env;
     return {
         expose(map) {
             env = {...env, ...map};
         },
         async close() {
+            const exists = await fsasync.exists(filePath);
+            if (exists && !overwrite) throw new Error(`Existing file (use --overwrite flag?): ${filePath}`)
             await writeEnvFileAsync(filePath, env);
         }
     };

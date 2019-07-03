@@ -18,6 +18,7 @@ async function execAsync(args, stdout) {
         cmd, 
         cmd_args, 
         out_file,
+        out_overwrite,
         use_shell
     } = runCfg;
 
@@ -30,8 +31,7 @@ async function execAsync(args, stdout) {
     if (cmd === 'run') {
         await envex.resolveEnv({ ...process.env, 'FORCE_COLOR': '1' });
         if (out_file) {
-            // TODO: checking if file exists? overwrite flag?
-            await envex.attachExpose('file', out_file);
+            await envex.attachExpose('file', out_file, out_overwrite);
         }
         if (cmd_args.length > 0) {
             const [child_cmd, ...child_args] = cmd_args;
@@ -72,11 +72,13 @@ function processArgs(args) {
         .description('run child cmd under specified environment (*default command)')
         .option('-s, --shell', 'use system shell for the child command')
         .option('--out <filepath>', 'write exposed vars to the specified file after execution')
+        .option('-w, --overwrite', 'overwrite output file, if already exists (default: error, if exists)')
         .action((cmd_args, cmd_opts) => {
             opts.cmd = 'run';
             opts.cmd_args = cmd_args;
             if (cmd_opts['shell']) opts.use_shell = true;
             if (cmd_opts['out']) opts.out_file = cmd_opts['out'];
+            if (cmd_opts['overwrite']) opts.out_overwrite = true;
         });
 
     program
