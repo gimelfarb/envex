@@ -216,7 +216,7 @@ As you can see, we are not hard-coding the admin password, but letting it be con
 
 ```javascript
 // File: .envexrc.js
-const shortuuid = require('shortuuid');
+const shortuuid = require('short-uuid');
 
 module.exports = {
   profiles: {
@@ -248,7 +248,7 @@ module.exports = {
 Make sure to install the package `shortuuid` that was used to create a random password:
 
 ```bash
-$ npm i -D shortuuid
+$ npm i -D short-uuid
 ```
 
 Now, let's create modify npm scripts in `package.json` to use these:
