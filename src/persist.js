@@ -1,6 +1,6 @@
 const fs = require('fs');
 const readline = require('readline');
-const { once } = require('events');
+const { once } = require('./util');
 
 module.exports = {
     readEnvFileAsync,
@@ -23,14 +23,14 @@ async function readEnvStreamAsync(input) {
 }
 
 // Borrowed from: https://github.com/motdotla/dotenv
-const regexEnvLine = /^\s*(?<key>[\w.-]+)\s*=\s*(?<val>.*)?\s*$/;
+const regexEnvLine = /^\s*([\w.-]+)\s*=\s*(.*)?\s*$/;
 const regexEnvComment = /^\s*#/;
 const regexEnvEmpty = /^\s*$/;
 
 function parseEnvLine(line, env) {
     const m = line.match(regexEnvLine);
     if (m) {
-        let { key, val } = m.groups;
+        let { 1: key, 2: val } = m;
         val = val && val.trim();
         if (val) {
             // TODO: quotes and escape handling ...
