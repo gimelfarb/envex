@@ -28,6 +28,8 @@ async function execAsync(args, stdout) {
     await envex.loadConfig(rc_file);
     await envex.selectProfile(profile);
 
+    envex.useStdOut(stdout);
+
     if (cmd === 'run') {
         await envex.resolveEnv({ ...process.env, 'FORCE_COLOR': '1' });
         if (out_file) {

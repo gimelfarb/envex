@@ -35,6 +35,10 @@ class Envex {
         this.use_shell = enabled;
     }
 
+    useStdOut(stdout) {
+        this.stdout = stdout;
+    }
+
     async resolveEnv(parent_env) {
         this.env = await this._env(parent_env);
     }
@@ -64,7 +68,7 @@ class Envex {
         };
 
         const { code } = await runChildAsync(child_cmd, child_args, { stdio, env, cwd, shell });
-        if (code) throw new Error(`Process exit code (${code}) is non-zero: ${child_cmd}`);
+        if (code) throw new Error(`Process exit code (${code}) is non-zero: ${child_cmd} ${(child_args || []).join(' ')}`);
 
         let str = await strpromise;
         str = str.replace(/(\r?\n|\r)+$/, '');
@@ -75,28 +79,37 @@ class Envex {
         const env = this.env;
         const { cwd } = this.config || {};
         const shell = this.use_shell;
-        let stdio;
+        const stdout = this.stdout || process.stdout;
+        let stdio, tap;
 
         if (this.config && this.exposer) {
             const exposectx = createExposeContext();
             exposectx.extend(this.config.expose);
 
             const expose = (map) => this.exposer.expose(map);
-            const tap = createTapStream();
+            tap = createTapStream();
             await exposectx.apply({ env, tap, expose });
 
             tap.pipe(createSinkStream());
 
             stdio = {
                 stdin: 'inherit',
-                stdout: (out) => out.pipe(createChildFilterStream(tap)).pipe(process.stdout),
+                stdout: (out) => out.pipe(createChildFilterStream(tap)).pipe(stdout),
                 stderr: (out) => out.pipe(createChildFilterStream(tap)).pipe(process.stderr)
+            };
+        }
+        else if (this.stdout && this.stdout !== process.stdout) {
+            stdio = {
+                stdin: 'inherit',
+                stdout: (out) => out.pipe(stdout),
+                stderr: 'inherit'
             };
         }
 
         try {
             return await runChildAsync(child_cmd, child_args, { stdio, env, cwd, shell });
         } finally {
+            tap && tap.end();
             this.exposer && (await this.exposer.close());
         }
     }
