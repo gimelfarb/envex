@@ -244,7 +244,7 @@ function parseEnvKey(key) {
 }
 
 function parseEnvStr(s) {
-    const regex = /\$\{(?<var>[^${}]*)\}|\$(?<var2>[a-z0-9_]+)|\$\((?<cmd>[^)]*)\)/gi;
+    const regex = /\$\{(?<var>[^${}]*)\}|\$(?<var2>[a-z0-9_]+)|\$\((?<cmd>(?:(?:\\\))|[^)])*)\)/gi;
     let m, i = 0, res = [];
     while ((m = regex.exec(s))) {
         if (i < m.index) res.push(s.substring(i, m.index));
@@ -256,6 +256,7 @@ function parseEnvStr(s) {
             res.push({ type: 'var', name: m.groups['var2'] });
         } else if (m.groups['cmd']) {
             let cmd = m.groups['cmd'], profile;
+            cmd = cmd.replace('\\)', ')');
             const rxcmd = /^(\[(?<profile>[^\]]*)\]\s*)?/i;
             const mc = rxcmd.exec(cmd);
             if (mc) {
