@@ -25,13 +25,10 @@ async function loadConfigAsync(potentialPath) {
         throw new Error('Unknown config file extension: ' + configPath);
     }
 
-    return {
-        configPath,
-        ...(createConfigResolver(rawConfig))
-    };
+    return createConfigResolver(rawConfig, configPath);
 }
 
-function createConfigResolver(rawConfig) {
+function createConfigResolver(rawConfig, configPath) {
     const rawProfiles = rawConfig.profiles || {};
     const resolvedProfiles = {};
     const _profile = async (name, resolvingProfiles) => {
@@ -42,7 +39,7 @@ function createConfigResolver(rawConfig) {
             if (resolvingProfiles[name]) throw new Error(`Circular reference for profile: ${name}`);
             resolvingProfiles[name] = true;
             try {
-                const recursiveConfig = { profile: (name) => _profile(name, resolvingProfiles) };
+                const recursiveConfig = { configPath, profile: (name) => _profile(name, resolvingProfiles) };
                 const resolved = await resolveProfileConfigAsync(rawProfile, recursiveConfig);
                 resolvedProfiles[name] = resolved;
             } finally {
@@ -52,6 +49,7 @@ function createConfigResolver(rawConfig) {
         return resolvedProfiles[name];
     };
     const config = {
+        configPath,
         async profile(name) {
             return _profile(name, {});
         }
@@ -76,9 +74,11 @@ async function resolveProfileConfigAsync(rawProfile, config) {
     if (typeof imports === 'string') imports = [ imports ];
     else if (!Array.isArray(imports)) imports = [];
 
+    // file resolution is relative to config file
+    const configDir = path.dirname(config.configPath);
     for (const name of imports) {
-        // FIX TODO: file resolution needs to be relative to config file
-        const env = await readEnvFileAsync(name);
+        const filePath = path.resolve(configDir, name);
+        const env = await readEnvFileAsync(filePath);
         base = extendProfileConfig(base, { env });
     }
 
