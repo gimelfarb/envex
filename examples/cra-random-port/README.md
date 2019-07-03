@@ -1,68 +1,155 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Example - Dynamic Port React App
 
-## Available Scripts
+Example project showcasing the use of [`envex`](../..) to enable dynamic local port when developing a React app.
 
-In the project directory, you can run:
+Most React apps are created using [create-react-app](https://github.com/facebook/create-react-app) command line. This means that `npm start` will, by default, start your app on port 3000 (and watch for source changes to refresh the app). You only need to develop a few projects like that to start running into port collision issues.
 
-### `npm start`
+### Bootstrap
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app):
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+```
+$ mkdir cra-random-port && cd $_
+$ npx create-react-app . --use-npm
+```
 
-### `npm test`
+### Part 1 - Start with Dynamic Port
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+We will extend the app setup with `envex` to guarantee that every developer will start the app on a free port locally:
 
-### `npm run build`
+```
+$ npm i -D envex
+```
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Let's create a file `.envexrc.js` in the project root:
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+```javascript
+// File: .envexrc.js
+module.exports = async () => ({
+  profiles: {
+    'npm:start': {
+      env: {
+        // Dynamic PORT using get-port-cli command-line utility
+        'PORT': '$(npx -q get-port-cli)'
+      }
+    }
+  }
+});
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+We will modify the 'start' script in `package.json` (running through `envex`):
 
-### `npm run eject`
+```json
+{
+  "scripts": {
+    "start": "envex react-scripts start"
+  }
+}
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Following will happen when you run `npm start`:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. `envex` will locate `.envexrc.js` in the current working folder
+2. `envex`, being aware it is launched by an npm script, will locate the "npm:start" profile
+3. `envex` will resolve "PORT" env variable to a local free port (by running `npx -q get-port-cli`), and launch `react-scripts start`
+4. `react-scripts start` will open default system browser at the correct URL for the app
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Part 2 - VSCode Debugging with Dynamic Port
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+We can further extend upon the previous example. We'll integrate with Visual Studio Code, so that we can launch debugging via F5. In addition, `react-scripts` has a feature where it can ask user to change the port interactively, meaning that generated `PORT` value is not always the final one used.
 
-## Learn More
+We'll use a [feature of `react-scripts`](https://facebook.github.io/create-react-app/docs/advanced-configuration) where `BROWSER` environment variable can be a JS script, which is invoked when URL is known, and it is about to launch a browser. Instead, we'll use that opportunity to generate an HTML "launch file", which redirects to the app URL, and which VSCode will be using to start debugging.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Let's install a `dot-launch` utility to be able to generate HTML "launch file":
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+$ npm i -D dot-launch
+```
 
-### Code Splitting
+We'll create a JS script to be used through `BROWSER` env variable. Create a `.launchgen.js` in the project root folder:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+```javascript
+// File: .launchgen.js
+const { execSync } = require('child_process');
 
-### Analyzing the Bundle Size
+try {
+    // Just invoke a command-line utility to generate the "launch file" ...
+    execSync('envex -p launchgen dot-launch', { stdio: 'inherit' });
+    console.log('Launch file generated!');
+} catch (err) {
+    process.exit(err.status || -1);
+}
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+By default, `dot-launch` will create a file `.launch/app.html` using the supplied URL (via `URL` env variable).
 
-### Making a Progressive Web App
+Let's modify `.envexrc.js` config:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+```javascript
+// File: .envexrc.js
+module.exports = async () => ({
+  profiles: {
+    'npm:start': {
+      env: {
+        'PORT': '$(npx -q get-port-cli)',
+        // Here we point react-scripts to use ".launchgen.js" script
+        'BROWSER': '.launchgen.js'
+      },
+      expose: {
+        // react-scripts outputs the app URL to stdout, and we can
+        // intercept that, to expose a value to other tools (see below)
+        'PORT': {
+            regex: /https?:\/\/[^:]+:([0-9]+)/mi
+        }
+      }
+    },
+    // 'launchgen' profile will be used by the JS script pointed to
+    // by BROWSER env variable passed to 'react-scripts'
+    'launchgen': {
+      env: {
+        // Retrieve PORT value exposed by envex from 'npm:start' profile
+        // when running 'react-scripts start'
+        'PORT': '$(envex -p npm:start get PORT)',
+        // URL is needed for 'dot-launch' utility
+        'URL': 'http://localhost:${PORT}/'
+      }
+    }
+  }
+});
+```
 
-### Advanced Configuration
+Finally, we'll create the following VSCode launch configuration (`.vscode/launch.json` file):
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+```js
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Frontend",
+            // Here we point to the generated launch file!
+            "file": "${workspaceFolder}/.launch/app.html",
+            "webRoot": "${workspaceFolder}"
+        },
+    ]
+}
+```
 
-### Deployment
+To start debugging, launch the debug server:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+```bash
+$ npm start
+```
 
-### `npm run build` fails to minify
+Now, you can press F5 to debug through VSCode - it will connect to the correct dynamic URL!
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+The sequence of steps explained:
+
+1. `npm start` launches `react-scripts start` through `envex` 'npm:start' profile
+2. `envex` 'npm:start' profile generates a free `PORT` number, and also sets `BROWSER` variable to tell `react-scripts` to run it after debug web server PORT number has been fully confirmed (*i.e. it can change interactively, if there are unlikely collisions*)
+3. `envex` 'npm:start' profile also sets up a watch for URLs in stdout (using regex), and told to expose it via `PORT` exposed variable. Exposing variables means starting a local server on a Unix-style socker (pipes on Windows), which can be queries through `envex` command-line.
+4. When `react-script` launch `.launchgen.js` script (via `BROWSER` setting), it will run `dot-launch` command-line utility through `envex` profile 'launchgen'
+5. `envex` 'launchgen' profile will retrieve exposed PORT value (i.e. `$(envex -p npm:start get PORT)`), and set the  `URL` env variable to the correct dynamic app URL (to be used by `dot-launch`)
+6. `dot-launch` generates an HTML launch file `.launch/app.html` using the specified `URL` (it is a page which automatically redirects to that URL when opened in browser)
+7. VSCode opens Chrome in debug mode, and uses "launch file" which redirects to the generated app URL!
