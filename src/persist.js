@@ -48,7 +48,7 @@ async function writeEnvFileAsync(filePath, env) {
     writeEnvStream(output, env);
     
     output.close();
-    await once(output, 'finish');
+    await once(output, 'close');
 }
 
 function writeEnvStream(output, env) {
