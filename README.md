@@ -9,7 +9,7 @@
 [codecov-badge]: https://img.shields.io/codecov/c/gh/gimelfarb/envex.svg
 [semrel-badge]: https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg
 
-Most flexible management of your environment variables configuration. Not limited to plain static values, variable values can be a result of an async function call at run-time, or bash-style command expansion $(...), allowing for some advanced scenarios. What's more, values can be extracted from command text output (e.g. dynamic ports, URLs, file paths, etc), and exposed locally to other processes running through Envex, creating powerful orchestrations.
+Highly configurable env var launcher. Not limited to plain static values, variable values can be a result of an async function call at run-time, or bash-style command expansion $(...), allowing for some advanced scenarios. What's more, values can be extracted from command text output (e.g. dynamic ports, URLs, file paths, etc), and exposed locally to other processes running through Envex, creating powerful orchestrations.
 
 Checkout examples below to explore how `envex` can be useful in any development workflow.
 
