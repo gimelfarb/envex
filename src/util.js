@@ -1,13 +1,7 @@
 module.exports = {
-    isPromiseLike,
     Deferred,
-    pick,
     streamToString
 };
-
-function isPromiseLike(p) {
-    return p && typeof p.then === 'function';
-}
 
 function Deferred() {
     /* A method to resolve the associated Promise with the value passed.
@@ -36,12 +30,6 @@ function Deferred() {
         this.reject = reject;
     }.bind(this));
     Object.freeze(this);
-}
-
-function pick(obj, keys) {
-    if (typeof keys === 'string') keys = [keys];
-    if (!Array.isArray(keys)) return {};
-    return keys.reduce((acc, key) => { acc[key] = obj[key]; return acc; }, {});
 }
 
 // https://stackoverflow.com/a/49428486/604316
