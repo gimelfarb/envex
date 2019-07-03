@@ -505,7 +505,7 @@ This project is licensed under the ISC License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* [env-cmd](https://github.com/toddbluhm/env-cmd) - 
-* [cross-env](https://github.com/kentcdodds/cross-env) - 
+* [env-cmd](https://github.com/toddbluhm/env-cmd) - Great utility that got me a long way in setting up project environments, before I decided to address the more advanced scenarios with `envex` (also inspired the 'profiles' concept!)
+* [cross-env](https://github.com/kentcdodds/cross-env) - Another lightweight popular tool for setting env on command-line in a cross-platform manner (e.g. in package.json scripts), supporting simple variable resolution
 
 Also, thanks [@PurpleBooth](https://github.com/PurpleBooth), for the [README template](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2) you created for all of us to use!
