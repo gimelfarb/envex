@@ -13,8 +13,6 @@ Most flexible management of your environment variables configuration. Not limite
 
 Checkout examples below to explore how `envex` can be useful in any development workflow.
 
-**WARNING**: *Under active development - this is still alpha quality, use at your own risk!*
-
 ## Motivation
 
 Modern frontend and backend development workflows include a myriad of tools (e.g. TypeScript, ESLint, Babel, Webpack, SCSS, Docker, DB migrators, etc). Not only do we want to be able to express environment variables for the application being built, but also for the various tools used to launch various parts of the build process and test environments (e.g. setting up isolated Docker environment for testing, running migrations on the DB, running e2e and unit tests, etc).
