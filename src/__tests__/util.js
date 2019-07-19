@@ -11,12 +11,20 @@ const fsasync = {
 
 module.exports = {
     createDeferred,
+    createStringReadable,
     createStringWriteable,
     createSignalServer,
     writeFile,
     cliexec,
     createCheckedCli,
     delay
+}
+
+function createStringReadable(s) {
+    const inp = new stream.Readable();
+    inp.push(s);
+    inp.push(null);
+    return inp;
 }
 
 function createStringWriteable() {

@@ -4,7 +4,9 @@ const { once } = require('./util');
 
 module.exports = {
     readEnvFileAsync,
+    readEnvStreamAsync,
     writeEnvFileAsync,
+    writeEnvStream
 };
 
 async function readEnvFileAsync(filePath) {
@@ -33,7 +35,15 @@ function parseEnvLine(line, env) {
         let { 1: key, 2: val } = m;
         val = val && val.trim();
         if (val) {
-            // TODO: quotes and escape handling ...
+            // Copied from dotenv library
+            const isDoubleQuoted = val[0] === '"' && val[val.length - 1] === '"';
+            const isSingleQuoted = val[0] === "'" && val[val.length - 1] === "'";
+            if (isDoubleQuoted || isSingleQuoted) {
+                val = val.substring(1, val.length - 1);
+                if (isDoubleQuoted) {
+                    val = val.replace(/\\n/g, '\n');
+                }
+            }
         }
         env[key] = val;
     } else {
